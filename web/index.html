@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OGF 商号索引 · OpenGeofiction 虚构品牌名录</title>
+<meta name="description" id="metaDesc" content="按 brand、operator、branch 标签汇总 OpenGeofiction 世界的虚构品牌与运营者；点开一家商号即可查看它的全球分布与要素标签。">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F7F3E8'/%3E%3Crect x='4' y='5' width='24' height='3' fill='%23191813'/%3E%3Crect x='4' y='11' width='16' height='2' fill='%23B23A1E'/%3E%3Crect x='4' y='16' width='22' height='2' fill='%23191813'/%3E%3Crect x='4' y='21' width='13' height='2' fill='%23191813'/%3E%3Crect x='4' y='26' width='19' height='2' fill='%23191813'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到主要内容</a>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="mast-rule">
+      <span class="kicker" data-i18n="kicker">OpenGeofiction · 商号档案</span>
+      <span class="mast-right">
+        <span class="kicker kicker-right" id="mastStamp">索引载入中</span>
+        <span class="lang" role="group" aria-label="语言 / Language">
+          <button type="button" class="langbtn on" data-lang="zh" lang="zh-CN">中文</button>
+          <button type="button" class="langbtn" data-lang="en" lang="en">EN</button>
+        </span>
+      </span>
+    </div>
+    <h1 class="wordmark"><a href="#/"><span class="wm-ogf">OGF</span><span class="wm-cn" data-i18n="wordmark">商号索引</span></a></h1>
+    <dl class="ledger" id="ledger">
+      <div><dt data-i18n="brands">品牌</dt><dd id="statBrands">—</dd></div>
+      <div><dt data-i18n="operators">运营者</dt><dd id="statOperators">—</dd></div>
+      <div><dt data-i18n="brandElements">品牌要素</dt><dd id="statElements">—</dd></div>
+      <div><dt data-i18n="operatorElements">运营者要素</dt><dd id="statBranches">—</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+  <!-- 索引 -->
+  <section id="viewIndex" aria-labelledby="indexTitle">
+    <div class="toolbar">
+      <div class="searchbox">
+        <label class="sr-only" for="q" data-i18n="search">搜索</label>
+        <svg class="searchicon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12.6 12.6 17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="搜索商号、运营者、分号或城市" data-i18n-placeholder="searchPlaceholder" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="seg" role="tablist" aria-label="索引类别" data-i18n-aria="indexKinds">
+        <button type="button" class="segbtn on" role="tab" aria-selected="true" data-kind="brand"><span data-i18n="brands">品牌</span> <span class="seg-count" id="tabBrand">0</span></button>
+        <button type="button" class="segbtn" role="tab" aria-selected="false" data-kind="operator"><span data-i18n="operators">运营者</span> <span class="seg-count" id="tabOperator">0</span></button>
+      </div>
+      <label class="sortsel countrysel"><span data-i18n="scope">范围</span>
+        <select id="country" aria-label="按 admin_level=2 国家筛选" data-i18n-aria="scopeAria">
+          <option value="" data-i18n="global">全球</option>
+        </select>
+      </label>
+      <label class="sortsel"><span data-i18n="sort">排序</span>
+        <select id="sort">
+          <option value="count" data-i18n="sortCount">要素数</option>
+          <option value="name" data-i18n="sortName">名称</option>
+          <option value="branches" data-i18n="sortBranches">分号数</option>
+        </select>
+      </label>
+    </div>
+
+    <h2 id="indexTitle" class="sr-only" data-i18n="indexTitle">商号索引</h2>
+    <ul class="facets" id="facets" aria-label="按类别筛选" data-i18n-aria="facetsAria"></ul>
+
+    <div class="resultline">
+      <span id="resultCount">—</span>
+      <span class="resultright"><span class="loadinfo" id="loadInfo"></span><span class="snapshot" id="snapshot"></span></span>
+    </div>
+
+    <ol class="index" id="list"></ol>
+    <p class="morewrap"><button type="button" class="btn ghost" id="showMore" data-i18n="continue" hidden>继续显示</button></p>
+    <div class="state" id="state" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- 详情 -->
+  <section id="viewDetail" hidden aria-labelledby="dName">
+    <a class="back" id="backLink" href="#/" data-i18n="back">← 回到索引</a>
+    <div id="detailHead" class="dhead"></div>
+
+    <div class="detail-grid">
+      <div class="mapcard">
+        <div class="maphead">
+          <h2 data-i18n="mapHead">世界分布</h2>
+          <p id="mapMeta">正在查询…</p>
+        </div>
+        <div id="map"></div>
+        <div class="mapstate" id="mapState" hidden></div>
+      </div>
+      <aside class="facts" id="facts"></aside>
+    </div>
+
+    <div class="elems">
+      <div class="elems-head">
+        <h2 data-i18n="elemsHead">要素与标签</h2>
+        <p id="elemNote"></p>
+      </div>
+      <div class="elems-grid">
+        <ol class="elem-list" id="elemList"></ol>
+        <div class="tagpanel" id="tagPanel">
+          <p class="tagempty" data-i18n="tagPrompt">从左侧列表或地图上选一个要素，这里会列出它的全部 OSM 标签。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <p id="footNote">数据来自 <a href="https://opengeofiction.net/" target="_blank" rel="noopener">OpenGeofiction</a> 贡献者，以 ODbL 授权。索引为构建时快照，地图与标签在点开商号时实时查询 <code>overpass.opengeofiction.net</code>。</p>
+    <p id="footStamp">—</p>
+  </div>
+</footer>
+
+<noscript><p class="noscript" data-i18n="noscript">这个页面需要 JavaScript 才能读取索引与地图数据。</p></noscript>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

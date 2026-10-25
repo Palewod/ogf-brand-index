@@ -1,0 +1,11 @@
+# Overpass response cache (regenerable with scripts/build-index.mjs)
+cache/
+
+# Qoder site binding descriptor (tool-generated)
+*.qoder.site
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
