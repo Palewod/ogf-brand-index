@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Logo 管理 · OGF 商号索引</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F7F3E8'/%3E%3Crect x='4' y='5' width='24' height='3' fill='%23191813'/%3E%3Crect x='4' y='11' width='16' height='2' fill='%23B23A1E'/%3E%3Crect x='4' y='16' width='22' height='2' fill='%23191813'/%3E%3Crect x='4' y='21' width='13' height='2' fill='%23191813'/%3E%3Crect x='4' y='26' width='19' height='2' fill='%23191813'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="amast">
+  <div class="wrap">
+    <p class="kicker"><a href="./">OpenGeofiction · 商号索引</a> / 管理</p>
+    <h1>Logo 管理</h1>
+    <p class="alead">选一个品牌，上传图片，页面会直接提交到 GitHub 仓库；GitHub Pages 一般 1 分钟内自动更新。</p>
+  </div>
+</header>
+
+<main class="wrap amain">
+  <section class="acard" id="authCard">
+    <h2>1 · 连接仓库</h2>
+    <div class="afield">
+      <label for="token">GitHub Token</label>
+      <input id="token" type="password" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="arow">
+      <div class="afield">
+        <label for="repo">仓库</label>
+        <input id="repo" value="Palewod/ogf-brand-index" spellcheck="false">
+      </div>
+      <div class="afield afield-sm">
+        <label for="branch">分支</label>
+        <input id="branch" value="main" spellcheck="false">
+      </div>
+    </div>
+    <label class="acheck"><input id="remember" type="checkbox"> 在这台电脑记住 Token（公共电脑不要勾）</label>
+    <div class="aactions">
+      <button id="connect" class="btn">验证并载入品牌</button>
+      <span id="authStatus" class="astatus"></span>
+    </div>
+    <details class="ahelp">
+      <summary>怎么创建 Token</summary>
+      <ol>
+        <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained tokens</a>，新建一个。</li>
+        <li>Repository access 选 <b>Only select repositories</b>，勾选 <code>ogf-brand-index</code>。</li>
+        <li>Repository permissions 里把 <b>Contents</b> 设为 <b>Read and write</b>，其余不用给。</li>
+        <li>有效期按需设置，生成后复制 <code>github_pat_…</code> 粘贴到上面。</li>
+      </ol>
+      <p>Token 只保存在浏览器本地，只用于调用 GitHub API 提交文件，不会写进仓库，也不经过任何第三方服务器。</p>
+    </details>
+  </section>
+
+  <section class="acard" id="pickCard" hidden>
+    <h2>2 · 选择品牌</h2>
+    <input id="search" type="search" placeholder="搜索品牌名，例如 Six Twelve" autocomplete="off">
+    <p class="ahint" id="pickHint"></p>
+    <ul id="results" class="aresults"></ul>
+  </section>
+
+  <section class="acard" id="editCard" hidden>
+    <h2>3 · 上传 logo</h2>
+    <div class="abrand">
+      <span id="preview" class="logo logo-lg"></span>
+      <div class="abrand-text">
+        <b id="brandName"></b>
+        <span id="logoState" class="ahint"></span>
+      </div>
+    </div>
+
+    <label id="drop" class="adrop" for="file">
+      <input id="file" type="file" accept="image/png,image/jpeg,image/webp">
+      <span>拖入图片，或点击选择</span>
+      <small>支持 PNG / JPG / WebP，自动裁成 128×128 的 WebP 后提交</small>
+    </label>
+
+    <div class="aactions">
+      <button id="upload" class="btn" disabled>上传并提交</button>
+      <button id="remove" class="btn ghost" hidden>删除现有 logo</button>
+      <span id="status" class="astatus"></span>
+    </div>
+    <div id="result" class="aresult"></div>
+  </section>
+</main>
+
+<script src="admin.js"></script>
+</body>
+</html>

@@ -421,6 +421,7 @@
 
   var state = {
     meta: null,
+    logos: null,
     lists: { brand: null, operator: null },
     loading: {},
     listStats: {},
@@ -763,6 +764,27 @@
     return t('noBrand');
   }
 
+  function logoEntry(name) {
+    return state.logos && state.logos[name] ? state.logos[name] : null;
+  }
+
+  function monoStyle(name) {
+    var h = 0;
+    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    return 'background:hsl(' + h + ',24%,88%);color:hsl(' + h + ',30%,28%)';
+  }
+
+  function logoHtml(name, cls) {
+    var entry = logoEntry(name);
+    var mono = '<span class="mono" style="' + monoStyle(name) + '">' +
+      esc(Array.from(String(name))[0] || '?') + '</span>';
+    if (!entry || !entry.file) return '<span class="logo ' + cls + '">' + mono + '</span>';
+    var v = entry.updatedAt ? '?v=' + encodeURIComponent(entry.updatedAt) : '';
+    return '<span class="logo ' + cls + '">' + mono +
+      '<img src="logos/' + encodeURIComponent(entry.file) + v + '" alt="" loading="lazy" onerror="this.remove()">' +
+      '</span>';
+  }
+
   function renderList() {
     var all = filtered();
     var shown = all.slice(0, state.limit);
@@ -778,6 +800,7 @@
       var pct = Math.max(4, Math.round((item.count / max) * 100));
       return '<li class="row"><button type="button" class="rowbtn" data-name="' + esc(item.name) + '">' +
         '<span class="rank">' + String(i + 1).padStart(2, '0') + '</span>' +
+        logoHtml(item.name, 'logo-sm') +
         '<span class="who"><span class="nm">' + esc(item.name) + '</span>' +
         '<span class="sub">' + esc(subLine(item)) + '</span></span>' +
         '<span class="cats">' + (cats || '<span class="cat">' + esc(t('uncategorised')) + '</span>') + '</span>' +
@@ -902,7 +925,8 @@
         '<span>' + esc(item.types.node || item.types.way ? Object.keys(item.types).filter(function (k) { return item.types[k]; }).map(function (k) { return k + ' ' + item.types[k]; }).join(' · ') : '—') + '</span>' +
         '<span>' + esc(t('snapElements', { n: fmtNum(item.count) })) + '</span>' +
       '</p>' +
-      '<h1 id="dName">' + esc(item.name) + '</h1>' +
+      '<div class="dtitle">' + logoHtml(item.name, 'logo-lg') +
+        '<h1 id="dName">' + esc(item.name) + '</h1></div>' +
       '<p class="dsub">' + sub.join(' · ') + '</p>' +
       '<div class="dcats">' + (cats || '<span class="cat">' + esc(t('uncategorised')) + '</span>') + '</div>';
 
@@ -1280,10 +1304,16 @@
 
   function load() {
     setState('<div class="skeleton"><span></span><span></span><span></span></div>', false);
-    fetch('data/meta.json').then(function (r) {
+    var metaReq = fetch('data/meta.json').then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
-    }).then(function (meta) {
+    });
+    var logoReq = fetch('data/logos.json', { cache: 'no-cache' }).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).catch(function () { return null; });
+    Promise.all([metaReq, logoReq]).then(function (res) {
+      var meta = res[0];
+      state.logos = (res[1] && res[1].logos) || {};
       state.meta = meta;
       setState('', false);
       var s = meta.stats || {};
