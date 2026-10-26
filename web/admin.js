@@ -97,16 +97,38 @@
       .map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
 
+  function decodeSvg(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        resolve({ source: img, width: img.naturalWidth || 512, height: img.naturalHeight || 512 });
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('SVG 无法解析'));
+      };
+      img.src = url;
+    });
+  }
+
   async function toWebp(file) {
-    var bitmap = await createImageBitmap(file);
+    var isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name || '');
+    var decoded = isSvg ? await decodeSvg(file) : null;
+    var bitmap = isSvg ? null : await createImageBitmap(file);
+    var srcW = isSvg ? decoded.width : bitmap.width;
+    var srcH = isSvg ? decoded.height : bitmap.height;
+    var source = isSvg ? decoded.source : bitmap;
     var size = 128;
     var canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
     var ctx = canvas.getContext('2d');
-    var scale = Math.min(size / bitmap.width, size / bitmap.height);
-    var w = Math.max(1, Math.round(bitmap.width * scale));
-    var h = Math.max(1, Math.round(bitmap.height * scale));
-    ctx.drawImage(bitmap, Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
+    var scale = Math.min(size / srcW, size / srcH);
+    var w = Math.max(1, Math.round(srcW * scale));
+    var h = Math.max(1, Math.round(srcH * scale));
+    ctx.drawImage(source, 0, 0, srcW, srcH, Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
+    if (bitmap) bitmap.close();
     var blob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/webp', 0.92); });
     if (!blob) throw new Error('当前浏览器无法编码 WebP');
     return blob;
@@ -256,8 +278,10 @@
 
   function handleFile(file) {
     if (!file) return;
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
-      setStatus(els.status, '只支持 PNG / JPG / WebP', 'err');
+    if (!/^image\/(png|jpeg|webp|svg\+xml)$/.test(file.type) && !/\.svg$/i.test(file.name || '')) {
+      state.blob = null;
+      els.upload.disabled = true;
+      setStatus(els.status, '只支持 PNG / JPG / WebP / SVG', 'err');
       return;
     }
     setStatus(els.status, '处理图片…');
