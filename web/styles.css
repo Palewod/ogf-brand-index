@@ -110,7 +110,7 @@ code{font-family:var(--mono);font-size:.9em;background:#EFE8D8;padding:.08em .32
 .index{list-style:none;margin:0;padding:0;border-top:2px solid var(--ink)}
 .row{border-bottom:1px solid var(--rule)}
 .rowbtn{
-  display:grid;grid-template-columns:34px 30px minmax(0,1fr) minmax(0,250px) 128px 16px;gap:14px;align-items:center;
+  display:grid;grid-template-columns:34px 32px minmax(0,1fr) minmax(0,250px) 128px 16px;gap:14px;align-items:center;
   width:100%;padding:13px 6px 13px 4px;background:none;border:0;text-align:left;cursor:pointer;color:inherit;
   font:inherit;position:relative;
 }
@@ -123,10 +123,10 @@ code{font-family:var(--mono);font-size:.9em;background:#EFE8D8;padding:.08em .32
 .logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--paper-2)}
 .logo .mono{display:flex;align-items:center;justify-content:center;width:100%;height:100%;
   font-family:var(--serif);font-weight:600}
-.logo-sm{width:30px;height:30px}
+.logo-sm{width:100%;max-width:32px;aspect-ratio:1}
 .logo-sm .mono{font-size:13px}
-.logo-lg{width:56px;height:56px;border-radius:8px}
-.logo-lg .mono{font-size:24px}
+.logo-lg{width:64px;height:64px;border-radius:8px}
+.logo-lg .mono{font-size:28px}
 .dtitle{display:flex;align-items:center;gap:16px;margin:0 0 10px}
 .dtitle #dName{margin:0}
 .who{min-width:0}

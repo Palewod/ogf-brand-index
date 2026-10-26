@@ -113,6 +113,22 @@
     });
   }
 
+  function inkBox(ctx, w, h) {
+    var data = ctx.getImageData(0, 0, w, h).data;
+    var minX = w, minY = h, maxX = -1, maxY = -1;
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 12) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    return maxX < 0 ? null : { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+  }
+
   async function toWebp(file) {
     var isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name || '');
     var decoded = isSvg ? await decodeSvg(file) : null;
@@ -120,15 +136,32 @@
     var srcW = isSvg ? decoded.width : bitmap.width;
     var srcH = isSvg ? decoded.height : bitmap.height;
     var source = isSvg ? decoded.source : bitmap;
-    var size = 128;
+
+    var work = 512;
+    var scaleIn = isSvg ? work / Math.max(srcW, srcH) : Math.min(1, work / Math.max(srcW, srcH));
+    var tw = Math.max(1, Math.round(srcW * scaleIn));
+    var th = Math.max(1, Math.round(srcH * scaleIn));
+    var temp = document.createElement('canvas');
+    temp.width = tw;
+    temp.height = th;
+    var tctx = temp.getContext('2d');
+    tctx.drawImage(source, 0, 0, tw, th);
+    if (bitmap) bitmap.close();
+
+    var box = inkBox(tctx, tw, th);
+    var trimmed = !!box && (box.w < tw || box.h < th);
+    if (!box) box = { x: 0, y: 0, w: tw, h: th };
+
+    var size = isSvg || Math.max(tw, th) >= 192 ? 256 : 128;
+    var pad = trimmed ? Math.round(size * 0.04) : 0;
     var canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
     var ctx = canvas.getContext('2d');
-    var scale = Math.min(size / srcW, size / srcH);
-    var w = Math.max(1, Math.round(srcW * scale));
-    var h = Math.max(1, Math.round(srcH * scale));
-    ctx.drawImage(source, 0, 0, srcW, srcH, Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
-    if (bitmap) bitmap.close();
+    var scale = Math.min((size - pad * 2) / box.w, (size - pad * 2) / box.h);
+    var w = Math.max(1, Math.round(box.w * scale));
+    var h = Math.max(1, Math.round(box.h * scale));
+    ctx.drawImage(temp, box.x, box.y, box.w, box.h,
+      Math.round((size - w) / 2), Math.round((size - h) / 2), w, h);
     var blob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/webp', 0.92); });
     if (!blob) throw new Error('当前浏览器无法编码 WebP');
     return blob;
